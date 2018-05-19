@@ -1,89 +1,39 @@
 // Initialize the viz variable 
-var vizMedicareIPChrg;
+var vizSuperstore;
 
 /* ------------------------------ Part 1: Tableau Section [Start] ------------------------------ */
 window.onload= function() {
 // When the webpage has loaded, load the viz
 
-	// Declare sheet name for the sheet to pass data to D3.
-	var Tableau_Sheet_Name = "D3 Support IP Detail";
-	// Explicitly define ordered dimensions to D3 hierarchical data conversion.
-	var Ordered_Dimension_List_to_D3 = ["Provider State", "Zip Code Desc", "Provider Name"];
-	// Define particular Measure from Tableau to go into D3.
-	var Measure_Name = "SUM(IP_Measure_Swap)";
-	var Display_Measure_Name = "Discharges";
+	var Tableau_Sheet_Name = "Sales by Five Levels Pair"; // Declare sheet name for the sheet to pass data to D3.
+
+	// Explicitly define ordered dimensions and measure to D3 hierarchical data conversion.
+	var Ordered_Dimension_List_to_D3 = ["Customer Segment", "Product Category", "Region", "State or Province", "City"];
+	var Measure_Name = "SUM(Sales)";
 	
-	var placeholder = document.getElementById('myMedicareIPViz');
-	var vizURL = 'https://public.tableau.com/views/MedicareChargeProject_0/IPChargeDashboardD3Pair';
+	var placeholder = document.getElementById('mySuperstoreViz');
+	var vizURL = 'https://public.tableau.com/views/SampleDashboardSuperstore/D3TreeLayoutDashboardPair';
+	//https://public.tableau.com/views/SampleDashboardSuperstore/D3TreeLayoutDashboardPair
 	var options = {
-		width: '1200px',	//Original '1050px'
-		height: '720px',	//Original '1000px'
+		width: '550px',
+		height: '600px',
 		hideToolbar: true,
 		hideTabs: true,
 	
-		onFirstInteractive: function () {
+		onFirstInteractive: function () {			
 			// Function call to get tableau data after Tableau visualization is complete.
-			Pass_Tableau_Data_to_D3(vizMedicareIPChrg, Tableau_Sheet_Name, Ordered_Dimension_List_to_D3, 
-						Measure_Name, Display_Measure_Name, Draw_D3_Sunburst);
-			
-		}		
+			Pass_Tableau_Data_to_D3(vizSuperstore, Tableau_Sheet_Name, Ordered_Dimension_List_to_D3, Measure_Name, Draw_D3_TreeLayout);
+		}
 	};
 
-	vizMedicareIPChrg = new tableau.Viz(placeholder, vizURL, options);
-
-	// Listen for parameter change/selection for "IP Charge Dashboard D3 Pair"
-	vizMedicareIPChrg.addEventListener('parametervaluechange', function(parameterEvent) {
-		//console.log('Parameter Event Listener Activated.'); //Debug code
-		
-		parameterEvent.getParameterAsync().then( function(obj_Parameter){
-			var para_CurrentValue = obj_Parameter.getCurrentValue().formattedValue;
-			
-			console.log("Current Parameter Value: " + para_CurrentValue);
-			console.log(para_CurrentValue);
-			
-			switch(para_CurrentValue){
-				case "Total Discharges": 
-					Display_Measure_Name =  "Discharges"
-				break;
-
-				case "Total IP Covered Charges": 
-					Display_Measure_Name =  "Inpatient Covered Charges"
-				break;
-
-				case "Total IP Payments": 
-					Display_Measure_Name =  "Inpatient Payments"
-				break;				
-
-				case "Total IP Medicare Payments": 
-					Display_Measure_Name =  "Inpatient Medicare Payments"
-				break;
-				
-				default:
-					Display_Measure_Name = "Error: Review Tableau Parameter";
-			}
-			
-			if( para_CurrentValue.includes("Total") ) {
-			// Function call to get tableau data, transform and load to D3 chart generation after parameter change event.
-			Pass_Tableau_Data_to_D3(vizMedicareIPChrg, Tableau_Sheet_Name, Ordered_Dimension_List_to_D3, 
-						Measure_Name, Display_Measure_Name, Draw_D3_Sunburst);
-			}
-															
-		});		
-	});
+	vizSuperstore = new tableau.Viz(placeholder, vizURL, options);
 	
-
-	// Listen for filter change/selection for "IP Charge Dashboard D3 Pair"
-	vizMedicareIPChrg.addEventListener('filterchange', function(filterEvent) {
-
-		filterEvent.getFilterAsync().then( function(filterChangeField){
-			if (filterChangeField.getFieldName() === "Fiscal Year" || filterChangeField.getFieldName() === "DRG Definition") {
-
-				// Function call to get tableau data, transform and load to D3 chart generation 
-				// after filter change to "Fiscal Year" or "DRG Definition".
-				Pass_Tableau_Data_to_D3(vizMedicareIPChrg, Tableau_Sheet_Name, Ordered_Dimension_List_to_D3, 
-							Measure_Name, Display_Measure_Name, Draw_D3_Sunburst);
-			}			
-		});
+	// Listen for filter change/selection for "Superstore Sales Summary Dashboard"
+	vizSuperstore.addEventListener('filterchange', function(filterEvent) {
+		
+		// Function call to get tableau data after Tableau visualization is complete.		
+		Pass_Tableau_Data_to_D3(vizSuperstore, Tableau_Sheet_Name, Ordered_Dimension_List_to_D3, Measure_Name, Draw_D3_TreeLayout);
+		//console.log("Filter change event ran. ");		
 	});
 	
 };
@@ -95,8 +45,7 @@ window.onload= function() {
 
 // Import data from target dashboard-worksheet using Tableau Javascript API
 // and converting the data into a format for D3 input.
-//
-let Pass_Tableau_Data_to_D3 = function(vizName, sheetName, arrayDimensionNames, strMeasureName, strDisplayName, callback){
+let Pass_Tableau_Data_to_D3 = function(vizName, sheetName, arrayDimensionNames, strMeasureName, callback){
 	
 	var sheet = vizName.getWorkbook().getActiveSheet().getWorksheets().get(sheetName);
 	
@@ -122,10 +71,10 @@ let Pass_Tableau_Data_to_D3 = function(vizName, sheetName, arrayDimensionNames, 
 			
 			/*Convert Tableau data into Array of Objects for D3 processing. */
 			var Tableau_Array_of_Objects = ReduceToObjectTablulated(Array_of_Columns, Tableau_Array_of_Array);
-			console.log('***** Display Tableau Array_Of_Objects *****');	// Debug output
-			console.log(Tableau_Array_of_Objects);												// Debug output
+			//console.log('***** Display Tableau Array_Of_Objects *****');	// Debug output
+			//console.log(Tableau_Array_of_Objects);			// Debug output
 
-			TableauTreeData = Convert_To_TreeData(Tableau_Array_of_Objects, arrayDimensionNames, strMeasureName, strDisplayName);
+			TableauTreeData = Convert_To_TreeData(Tableau_Array_of_Objects, arrayDimensionNames, strMeasureName);
 						
 			//console.log('***** Display Tree Data *****');	// Debug output
 			//console.log(TableauTreeData);			// Debug output
@@ -134,7 +83,7 @@ let Pass_Tableau_Data_to_D3 = function(vizName, sheetName, arrayDimensionNames, 
 			if(typeof callback === "function"){
 				
 				//Javascript callback function to dynamically draw D3 chart
-				callback(TableauTreeData, strDisplayName);
+				callback(TableauTreeData);
 			}
 			
 	});
@@ -161,6 +110,7 @@ function ReduceToObjectTablulated(cols, data){
 		} // Looping through the object number of properties (aka: Fields) in object
 		
 		Array_Of_Objects.push(SingleObject);	// Dynamically append object to the array
+		
 
 		//console.log('*****************');	// Debug output
 		//console.log(SingleObject);		// Debug output
@@ -176,16 +126,16 @@ function ReduceToObjectTablulated(cols, data){
 
 // Convert tablulated data into hierarchical data for most advanced D3 charts
 // Not all D3 charts requires hierarchical data as input (ie: simple D3 line chart, simple D3 bar chart)
-function Convert_To_TreeData(FlatData, arrayDimensionNames, strValueName, strDisplayValue){
-	
-	// Clone a local array of Dimension Names so the array argument is pass by value and not by pass reference
-	var localArrayDimensionNames = arrayDimensionNames.slice();
-	
-	var TreeData = { name : strDisplayValue, children : [] };
-	var final_Child_Level = localArrayDimensionNames.pop();
-	var non_Final_Children_Levels = localArrayDimensionNames;
+function Convert_To_TreeData(FlatData, arrayDimensionNames, strValueName){
 
-	// Convert tabulated data to tree data.
+	// Remove Tableau Aggregation command text SUM(), ATTR(), COUNT(), etc
+	var formatted_Value_Name = strValueName.slice( (strValueName.indexOf("(") + 1) ,99).replace(")", "");
+	
+	var TreeData = { name : formatted_Value_Name, children : [] };
+	var final_Child_Level = arrayDimensionNames.pop();
+	var non_Final_Children_Levels = arrayDimensionNames;
+	
+	// Convert tablulated data to tree data.
 	// For each data row, loop through the expected levels traversing the output tree
 	FlatData.forEach(function(d){
 		// Keep this as a reference to the current level
@@ -207,10 +157,9 @@ function Convert_To_TreeData(FlatData, arrayDimensionNames, strValueName, strDis
 			depthCursor = depthCursor[index].children;
 			// This is a leaf, so add the last element to the specified branch
 
-			//Remove all commas in a text string
-			var TempString = d[strValueName].replace(/,/g,"");
+			var TempString = d[strValueName].replace(",","");
 			Target_Key = Math.round(+TempString); //Convert String to Numeric
-			
+
 			if ( depth === non_Final_Children_Levels.length - 1 ) {
 				depthCursor.push({ name : d[final_Child_Level], size : Target_Key });
 			}
@@ -223,179 +172,81 @@ function Convert_To_TreeData(FlatData, arrayDimensionNames, strValueName, strDis
 /* ---------------- Part 2: Convert Tableau Data to D3 Hierarchical Data [End] ---------------- */
 
 
-/* Part 3: Supporting Tableau Javascript Functions for Filter, Mark, Parameter Updates Section [Start] */
+/* ------------------- Part 3: D3 Tree Layout (Superstore) Section [Start] ------------------- */
+let Draw_D3_TreeLayout = function(nodeData){
 
-// Set Tableau workbook parameter to the specified value(s)
-function setParameterTo(vizName, parameterName, value) {
-  var mainWorkbook = vizName.getWorkbook();
-  mainWorkbook.changeParameterValueAsync(parameterName, value); 
-}
+	var treeLayout = d3.tree()
+		.size([750, 250]) 
 
+	// D3 data function to further format hierarchical data (Type: object)
+	// convert each individual node by 
+	//   1) nesting it with explicit "data" object
+	//   2) added hierarchical "depth" level
+	// along with the "name" and "value"
+	var root = d3.hierarchy(nodeData)
 
-// Highlight the specified dimension (mark) to the specified value(single)
-function setSingleMarkTo(vizName, sheetName, markName, singleValue) {
-	var sheet = vizName.getWorkbook().getActiveSheet().getWorksheets().get(sheetName);
-    sheet.selectMarksAsync(markName, singleValue, tableau.SelectionUpdateType.REPLACE); 
-}
+	// D3 function to further format hierarchical data 
+	// by adding assigning x, y plot coordinates relative to
+	// the defined D3 treeLayout dimension
+	treeLayout(root)
 
+	//Remove and re-create circle & line svg for chart refreshing
+	d3.select('svg g.nodes').selectAll("*").remove();
+	d3.select('svg g.links').selectAll("*").remove();
 
-// Filter the specified dimension to the specified value(s)
-function setFilterTo(vizName, sheetName, filterName, values) {
-	var sheet = vizName.getWorkbook().getActiveSheet().getWorksheets().get(sheetName);
-    sheet.applyFilterAsync(filterName, values, tableau.FilterUpdateType.REPLACE); 
-}
-
-
-function resetTextFilterTo(vizName, sheetName, filterName) {
-	var sheet = vizName.getWorkbook().getActiveSheet().getWorksheets().get(sheetName);
-    sheet.applyFilterAsync(filterName, "", tableau.FilterUpdateType.ALL); 
-}
-
-/* Part 3: Supporting Tableau Javascript Functions for Filter, Mark, Parameter Updates Section [End] */
-
-
-/* ------------------- Part 4: D3 Tree Layout (IP Medicare Charge) Section [Start] ------------------- */
-
-let Draw_D3_Sunburst = function(nodeData, strDisplayName){
 	
-  // Define the dimensions of the visualization.
-  var width = 660,		//480
-      height = 660,		//480
-      radius = (Math.min(width, height) / 2);
+	// Create D3 svg element:Nodes
+	d3.select('svg g.nodes')
+		.selectAll('circle.node')
+		.data(root.descendants())	// Pass data into D3 svg element
+		.enter()
+		.append('circle')
+		.classed('node', true)
+		.attr('cx', function(d) {return d.x;})
+		.attr('cy', function(d) {return d.y;})
+		.attr('r', 4)	//  Define the size of the node circle
 
-  /* Define the scales that will translate data values into visualization 
-		 properties. The "x" scale will represent angular position within the
-		 visualization, so it ranges linearly from 0 to 2π. The "y" scale will 
-		 represent area, so it ranges from 0 to the full radius of the
-		 visualization. Since area varies as the square of the radius, 
-		 this scale takes the square root of the input domain before mapping to
-		 the output range.  */
-  var x = d3.scaleLinear()
-			.range([0, 2 * Math.PI]);
+		// Add D3 tooltip
+		.append("title")
+		.text( Text_ToolTip );	// Initiate and call text tooltip
+		
+		
 
-  var y = d3.scaleSqrt()
-      .range([0, radius]);
+	// Create D3 svg element:Links
+	d3.select('svg g.links')
+		.selectAll('line.link')
+		.data(root.links())	// Pass data into D3 svg element
+		.enter()
+		.append('line')
+		.classed('link', true)
+		.attr('x1', function(d) {return d.source.x;})
+		.attr('y1', function(d) {return d.source.y;})
+		.attr('x2', function(d) {return d.target.x;})
+		.attr('y2', function(d) {return d.target.y;});
 
-  var color = d3.scaleOrdinal(d3.schemeSet3);
-  //var color = d3.scaleOrdinal()
-  //  .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
-  //var sequentialScaleColor = d3.scaleSequential(d3.interpolatePiYG);
-  //var sequentialScaleColor = d3.scaleSequential()
-  //  .domain([0, 2000000]);
-
-  // Declare Data structure
-  var partition = d3.partition();
-
-  // Size arcs
-  var arc = d3.arc()
-      .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x0))); })
-      .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x1))); })
-			.innerRadius(function(d) { return Math.max(0, y(d.y0)); })
-      .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
-			
-  //Remove and create svg for chart refreshing
-  d3.select("svg").remove();	  
-	  
-	  
-  /* Create the SVG container for the visualization and define its 
-		 dimensions. Within that container, add a group element (`<g>`) 
-		 that can be transformed via a translation to account for the 
-		 margins and to center the visualization in the container.*/  	  
-  var svg = d3.select(document.getElementById("D3_Sunburst"))
-			.append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .append("g")
-      .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
-  
-  // Find data root
-  var root = d3.hierarchy(nodeData);
-  root.sum(function(d) { return d.size; });
-  
-	console.log("***** root data *****");	// Debug output
-	console.log(root);			// Debug output
-	
-  svg.selectAll("path")
-      .data(partition(root).descendants())
-      .enter().append("path")
-      .attr("d", arc)
-
-      .style("fill", function(d) { return color((d.children ? d : d.parent).data.name); })	  
-      .on("click", click)	// Initiate D3 event listener for mouse click on D3 chart
-      .append("title")
-      .text( Text_ToolTip );	// Initiate and call text tooltip
-
-
-  // Function for click event  
-  function click(d) {
-    svg.transition()
-        .duration(750)
-        .tween("scale", function() {
-          var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
-              yd = d3.interpolate(y.domain(), [d.y0, 1]),
-              yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-          return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-        })
-				.selectAll("path")
-				.attrTween("d", function(d) { return function() { return arc(d); }; });
-
-		// From mouse click on D3 chart apply filter from D3 to 
-		// Tableau Medicare Inpatient Charge Dashboard.
-		Apply_Filter_Tableau_Medicare_Inpatient_Charge(d);
-  }
-  
   // Create text tooltip for D3 Chart
   function Text_ToolTip(d){
-		var Value_Field_Name = strDisplayName;
+		var Value_Field_Name = "Sales";
 		var Tooltip = ""; 
 		var formatComma = d3.format(",");
+	
+		switch(d.height){
+			case 0: 
+				Tooltip = d.data.name + "\n" + Value_Field_Name + ": " + "$" + formatComma(d.data.size);
+			break;			
 			
-		// Define whether dollar sign display on tooltip
-		var DollarSign = "";
-		
-		// Add dollar sign to tooltip if value is not "Discharges"
-		if( Value_Field_Name.toUpperCase().indexOf("DISCHARGES") === -1 ) {
-			DollarSign = "$";
+			default: 
+				Tooltip = d.data.name;
 		}
-		
-		Tooltip = d.data.name + "\n" + Value_Field_Name + ": " + DollarSign + formatComma(d.value);
 
 		//console.log("Height: " + d.height);			// Debug output
-		//console.log("Depth: " + d.depth);			// Debug output
-		//console.log("Value_Field_Name: " + d.data.name);	// Debug output
-		//console.log("Value: " + d.value);			// Debug output
-		//console.log("Size: " + d.data.size);			// Debug output
-
+		//console.log("Value_Field_Name: " + Value_Field_Name);	// Debug output
+		//console.log("Value: " + d.data.size);			// Debug output
+				
 		return Tooltip;
-  }   
-  
-  d3.select(self.frameElement).style("height", height + "px");
-
-}
-
-
-// Apply filter update to Tableau Medicare Inpatient Charge Dashboard.
-function Apply_Filter_Tableau_Medicare_Inpatient_Charge(d){
-
-	// Run Tableau Javascript API function to update filter to Tableau worksheet.
-	switch(d.depth){
-		case 0:
-			resetTextFilterTo(vizMedicareIPChrg, "IP Map D3", "Provider State");
-		break;
-		
-		case 1: 
-			setFilterTo(vizMedicareIPChrg, "IP Map D3", "Provider State", d.data.name);
-			
-			// Reset Tableau filter for "Zip Code Desc"
-			resetTextFilterTo(vizMedicareIPChrg, "IP Map D3", "Zip Code Desc");
-		break;
+  }		
 	
-		case 2:
-			setFilterTo(vizMedicareIPChrg, "IP Map D3", "Zip Code Desc", d.data.name);
-		break;
-		
-	}
-}
+};
 
 
-/* -------------------- Part 4: D3 Tree Layout (IP Medicare Charge) Section [End] -------------------- */
+/* -------------------- Part 3: D3 Tree Layout (Superstore) Section [End] -------------------- */
