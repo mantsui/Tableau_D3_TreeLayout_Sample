@@ -1,15 +1,12 @@
 html, body {
   margin: 0;
   height: 100%;
+  background-color: #e6e6e6;
 }
 
 path {
-	stroke:rgb(255, 255, 255);
-	stroke-width: 3.5px;
-}
-
-body {
-    background-color: rgb(230,230,230);
+  stroke:rgb(255, 255, 255);
+  stroke-width: 3.5px;
 }
 
 .flex-container {
@@ -17,22 +14,20 @@ body {
 }
 
 h2 {
-    color: #55007f;
-    font-family: verdana;
-    font-size: 100%;
+  color: #55007f;
+  font-family: verdana;
+  font-size: 100%;
 }
 
 .node {
-  fill: steelblue;
+  fill: #55007f;
   stroke: none;
 }
 
 .link {
   fill: none;
-  stroke: #ccc;
-  stroke-width: 5px;
-}
-
-.flex-container {
-  display: flex;
+  stroke: #6698FF;
+  /* set line color to sky blue */
+	
+  stroke-width: 2px;
 }
