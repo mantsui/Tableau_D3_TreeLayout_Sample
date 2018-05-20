@@ -16,7 +16,7 @@ window.onload= function() {
 	//https://public.tableau.com/views/SampleDashboardSuperstore/D3TreeLayoutDashboardPair
 	var options = {
 		width: '550px',
-		height: '600px',
+		height: '650px',
 		hideToolbar: true,
 		hideTabs: true,
 	
